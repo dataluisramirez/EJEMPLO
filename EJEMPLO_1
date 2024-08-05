@@ -1,0 +1,58 @@
+import streamlit as st
+import sqlite3
+import pandas as pd
+
+# Configuración de la base de datos
+conn = sqlite3.connect('club_deportivo.db')
+c = conn.cursor()
+
+# Crear tabla si no existe
+c.execute('''
+CREATE TABLE IF NOT EXISTS estudiantes (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT,
+    edad INTEGER,
+    telefono TEXT,
+    peso REAL,
+    altura REAL,
+    curso TEXT,
+    apoderado TEXT,
+    correo_apoderado TEXT
+)
+''')
+conn.commit()
+
+# Función para agregar un nuevo estudiante
+def agregar_estudiante(nombre, edad, telefono, peso, altura, curso, apoderado, correo_apoderado):
+    c.execute('''
+    INSERT INTO estudiantes (nombre, edad, telefono, peso, altura, curso, apoderado, correo_apoderado)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (nombre, edad, telefono, peso, altura, curso, apoderado, correo_apoderado))
+    conn.commit()
+
+# Función para obtener todos los estudiantes
+def obtener_estudiantes():
+    c.execute('SELECT * FROM estudiantes')
+    datos = c.fetchall()
+    return pd.DataFrame(datos, columns=['ID', 'Nombre', 'Edad', 'Teléfono', 'Peso', 'Altura', 'Curso', 'Apoderado', 'Correo Apoderado'])
+
+# Interfaz de usuario con Streamlit
+st.title('Registro de Estudiantes - Club Deportivo')
+
+st.sidebar.header('Agregar nuevo estudiante')
+nombre = st.sidebar.text_input('Nombre')
+edad = st.sidebar.number_input('Edad', min_value=0, max_value=100, step=1)
+telefono = st.sidebar.text_input('Teléfono')
+peso = st.sidebar.number_input('Peso (kg)', min_value=0.0, step=0.1)
+altura = st.sidebar.number_input('Altura (cm)', min_value=0.0, step=0.1)
+curso = st.sidebar.text_input('Curso')
+apoderado = st.sidebar.text_input('Apoderado')
+correo_apoderado = st.sidebar.text_input('Correo Apoderado')
+
+if st.sidebar.button('Agregar Estudiante'):
+    agregar_estudiante(nombre, edad, telefono, peso, altura, curso, apoderado, correo_apoderado)
+    st.sidebar.success('Estudiante agregado con éxito')
+
+st.header('Listado de Estudiantes')
+df = obtener_estudiantes()
+st.dataframe(df)
